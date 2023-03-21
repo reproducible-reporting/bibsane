@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=65.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "BibSane"
+version = "0.1.0"
+authors = [
+  { name="Toon Verstraelen", email="toon.verstraelen@ugent.be" },
+]
+description = "Sanitize BibTeX files without going insane"
+readme = "README.md"
+license = {file = "COPYING"}
+requires-python = ">=3.6"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Markup :: LaTeX",
+]
+dependencies = [
+    "bibtexparser",
+    "PyYAML",
+    "attrs",
+    "cattrs",
+]
+
+[project.urls]
+Issues = "https://github.com/reproducible-reporting/bibsane/issues"
+Source = "https://github.com/reproducible-reporting/bibsane/"
+Changelog = "https://github.com/reproducible-reporting/bibsane/blob/main/CHANGELOG.md"
+
+[project.scripts]
+bibsane = "bibsane:main"

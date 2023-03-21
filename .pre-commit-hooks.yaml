@@ -1,0 +1,10 @@
+- id: bibsane
+  name: Sanitize BibTeX files
+  description: Sanitize BibTeX files without going insane!
+  entry: bibsane -q
+  language: python
+  types: [text]
+  always_run: true
+  pass_filenames: false
+  files: '\.(aux|bib)$'
+  minimum_pre_commit_version: "2.8.0"

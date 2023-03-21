@@ -1,0 +1,34 @@
+bibtex_out: references.bib
+drop_entry_types: ["control"]
+normalize_doi: true
+duplicate_id: merge  # other options: fail or ignore
+duplicate_doi: merge  # other options: fail or ignore
+preambles_allowed: false
+normalize_whitespace: true
+fix_page_double_hyphen: true
+# The filename is relative to the location of the config file.
+abbreviate_journal: 'journal_abbreviation_cache.json'
+sort: true  # sort key = {year}{first author lowercase normalized name}
+citation_policies:
+  article:
+    author: must
+    journal: must
+    number: may
+    pages: must
+    title: must
+    volume: must
+    year: must
+    doi: must
+  book:
+    author: must
+    title: must
+    publisher: must
+    year: must
+    month: must
+    isbn: must
+  misc:
+    title: must
+    author: must
+    year: must
+    eprint: must
+    archivePrefix: must
