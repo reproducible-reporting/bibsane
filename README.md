@@ -16,7 +16,7 @@ Features:
     - Drop irrelevant entry types
     - Remove cruft from BibTeX entries.
       One may add a field, such as `bibsane = {misc.url}` to support multiple policies for one
-      BibTeX entry 
+      BibTeX entry
     - Restrict the types of entries.
     - Disallow `@preamble`.
     - Strip newlines and redundant whitespace in fields.

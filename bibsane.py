@@ -23,7 +23,6 @@
 
 import argparse
 import enum
-from glob import glob
 import hashlib
 import json
 import os
@@ -33,6 +32,7 @@ import sys
 import tempfile
 import urllib.parse
 import urllib.request
+from glob import glob
 
 import attrs
 import bibtexparser
@@ -137,7 +137,6 @@ def process_aux(fn_aux, config, verbose):
         if verbose:
             print("📂 Loading", fn_aux)
         citations, fns_bib = parse_aux(fn_aux)
-
 
     if verbose:
         print(f"   Found {len(citations)} citations")
