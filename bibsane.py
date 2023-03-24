@@ -102,7 +102,10 @@ RETURN_CODE_BROKEN = 2
 def main():
     fns_aux, config, verbose = parse_args()
     if len(fns_aux) == 0:
-        fns_aux = [fn for fn in glob("**/*.aux", recursive=True)]
+        # Only select aux files for which corresponding tex files exist.
+        fns_aux = [
+            fn for fn in glob("**/*.aux", recursive=True) if os.path.isfile(fn[:-4] + ".tex")
+        ]
     first = True
     for fn_aux in fns_aux:
         if first:
