@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2023-04-12
+
+### Fixed
+
+- The exit code was not always set correctly. This is fixed.
+
 ## [0.1.1] - 2023-03-24
 
 ### Fixed

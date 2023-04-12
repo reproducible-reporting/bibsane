@@ -112,7 +112,7 @@ def main():
             first = False
         else:
             print()
-        process_aux(fn_aux, config, verbose)
+        return process_aux(fn_aux, config, verbose)
 
 
 def parse_args():
