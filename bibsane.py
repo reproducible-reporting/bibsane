@@ -28,7 +28,6 @@ import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 import urllib.parse
 import urllib.request
@@ -83,6 +82,7 @@ class Config:
 
     @classmethod
     def from_file(cls, fn_yaml):
+        """Instantiate a configuration from a YAML config file."""
         if fn_yaml is None:
             config = Config()
             config.root = os.getcwd()
@@ -100,6 +100,7 @@ RETURN_CODE_BROKEN = 2
 
 
 def main():
+    """Bibsane main program."""
     fns_aux, config, verbose = parse_args()
     if len(fns_aux) == 0:
         # Only select aux files for which corresponding tex files exist.
@@ -133,10 +134,9 @@ def process_aux(fn_aux, config, verbose):
         if verbose:
             print("Please, give an aux file as command-line argument, got:", fn_aux)
         return RETURN_CODE_BROKEN
-    else:
-        if verbose:
-            print("📂 Loading", fn_aux)
-        citations, fns_bib = parse_aux(fn_aux)
+    if verbose:
+        print("📂 Loading", fn_aux)
+    citations, fns_bib = parse_aux(fn_aux)
 
     if verbose:
         print(f"   Found {len(citations)} citations")
@@ -489,6 +489,7 @@ def abbreviate_journal_iso(entries, fn_cache):
 
 
 def download_abbrev(journal):
+    """Download the abbreviation of a full journal name."""
     print("   Downloading abbreviation for:", journal)
     journal_quote = urllib.parse.quote(journal)
     prefix = "https://abbreviso.toolforge.org/abbreviso/a/"
@@ -531,6 +532,7 @@ def sort_entries(entries):
 
 
 def write_output(entries, fn_out, retcode, verbose):
+    """Write out the fixed bibtex file, in case it has changed."""
     if retcode == RETURN_CODE_CHANGED:
         # Write out a single BibTeX database.
         db_out = bibtexparser.bibdatabase.BibDatabase()
