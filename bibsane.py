@@ -31,6 +31,7 @@ import shutil
 import tempfile
 import urllib.parse
 import urllib.request
+from collections.abc import Collection
 from glob import glob
 
 import attrs
@@ -99,24 +100,21 @@ RETURN_CODE_CHANGED = 1
 RETURN_CODE_BROKEN = 2
 
 
-def main():
+def main() -> int:
     """Bibsane main program."""
-    fns_aux, config, verbose = parse_args()
+    fns_aux, verbose, config = parse_args()
     if len(fns_aux) == 0:
         # Only select aux files for which corresponding tex files exist.
         fns_aux = [
             fn for fn in glob("**/*.aux", recursive=True) if os.path.isfile(fn[:-4] + ".tex")
         ]
-    first = True
-    for fn_aux in fns_aux:
-        if first:
-            first = False
-        else:
+    for ifn, fn_aux in enumerate(fns_aux):
+        if ifn > 0:
             print()
-        return process_aux(fn_aux, config, verbose)
+        return process_aux(fn_aux, verbose, config)
 
 
-def parse_args():
+def parse_args() -> tuple[list[str], bool, Config]:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser("bibsane")
     parser.add_argument("aux", nargs="*", help="The LaTeX aux file of your document")
@@ -124,10 +122,10 @@ def parse_args():
     parser.add_argument("-c", "--config", help="An optional configuration file")
     args = parser.parse_args()
     config = Config.from_file(args.config)
-    return args.aux, config, not args.quiet
+    return args.aux, not args.quiet, config
 
 
-def process_aux(fn_aux, config, verbose):
+def process_aux(fn_aux: str, verbose: bool, config: Config) -> int:
     """Main program."""
     # Load the aux file.
     if not fn_aux.endswith(".aux"):
@@ -247,10 +245,11 @@ def process_aux(fn_aux, config, verbose):
 
     # Overwrite if needed.
     fn_out = os.path.join(os.path.dirname(fn_aux), config.bibtex_out)
+    print(fn_out)
     return write_output(entries, fn_out, retcode, verbose)
 
 
-def parse_aux(fn_aux):
+def parse_aux(fn_aux: str) -> tuple[list[str], list[str]]:
     """Parse the relevant parts of a LaTeX aux file."""
     root = os.path.dirname(fn_aux)
     citations = []
@@ -267,7 +266,7 @@ def parse_aux(fn_aux):
     return citations, fns_bib
 
 
-def parse_aux_line(prefix, line, words):
+def parse_aux_line(prefix: str, line: str, words: list[str]):
     """Parse a (simple) line from a LaTeX aux file."""
     if line.startswith(rf"\{prefix}{{"):
         assert line.endswith("}\n")
@@ -276,7 +275,7 @@ def parse_aux_line(prefix, line, words):
         words.extend(line[line.find("{") + 1 : -2].split(","))
 
 
-def collect_entries(fns_bib, config):
+def collect_entries(fns_bib: list[str], config: Config) -> tuple[list[dict[str, str]], bool]:
     """Collect entries from multiple BibTeX files."""
     # Collect stuff
     seen_ids = set()
@@ -307,7 +306,9 @@ def collect_entries(fns_bib, config):
     return entries, valid
 
 
-def drop_check_citations(entries, citations, drop):
+def drop_check_citations(
+    entries: list[dict[str, str]], citations: Collection[str], drop
+) -> tuple[list[dict[str, str]], bool]:
     """Drop unused citations and complain about missing ones."""
     # Drop unused entries
     result = []
@@ -331,7 +332,9 @@ def drop_check_citations(entries, citations, drop):
     return result, valid
 
 
-def clean_entries(entries, citation_policies):
+def clean_entries(
+    entries: list[dict[str, str]], citation_policies: dict[str, dict[str, FieldPolicy]]
+) -> tuple[list[dict[str, str]], bool]:
     """Clean the irrelevant fields in each entry and complain about missing ones."""
     cleaned = []
     valid = True
@@ -342,13 +345,13 @@ def clean_entries(entries, citation_policies):
         if "bibsane" in old_entry:
             etype = old_entry.pop("bibsane")
             new_entry["bibsane"] = etype
-        policy = citation_policies.get(etype)
-        if policy is None:
+        entry_policy = citation_policies.get(etype)
+        if entry_policy is None:
             print(f"   🤔 {eid}: @{etype} is not configured")
             valid = False
             continue
         cleaned.append(new_entry)
-        for field, policy in policy.items():
+        for field, policy in entry_policy.items():
             if policy == FieldPolicy.MUST:
                 if field not in old_entry:
                     print(f"   🫥 {eid}: @{etype} missing field {field}")
@@ -365,7 +368,7 @@ def clean_entries(entries, citation_policies):
     return cleaned, valid
 
 
-def fix_bad_practices(entries):
+def fix_bad_practices(entries: list[dict[str, str]]) -> list[dict[str, str]]:
     """Fix unwarranted use of braces."""
     result = []
     for old_record in entries:
@@ -381,7 +384,8 @@ def fix_bad_practices(entries):
     return result
 
 
-def potential_mistakes(entries):
+def potential_mistakes(entries: list[dict[str, str]]) -> bool:
+    """Detect potential mistakes in the BibTeX entry keys."""
     id_case_map = {}
     for entry in entries:
         id_case_map.setdefault(entry["ID"].lower(), []).append(entry["ID"])
@@ -403,10 +407,10 @@ DOI_PROXIES = [
 ]
 
 
-def normalize_doi(entries):
+def normalize_doi(entries: list[dict[str, str]]) -> tuple[list[dict[str, str]], bool]:
     """Normalize the DOIs in the entries."""
     result = []
-    value = True
+    valid = True
     for entry in entries:
         doi = entry.get("doi")
         if doi is not None:
@@ -417,18 +421,18 @@ def normalize_doi(entries):
                     break
             if doi.count("/") == 0 or not doi.startswith("10."):
                 print("   🤕 invalid DOI:", doi)
-                value = False
+                valid = False
             entry = entry | {"doi": doi}
         result.append(entry)
-    return result, value
+    return result, valid
 
 
-def normalize_whitespace(entries):
+def normalize_whitespace(entries: list[dict[str, str]]) -> list[dict[str, str]]:
     """Normalize the whitespace inside the field values."""
     return [{key: re.sub(r"\s+", " ", value) for key, value in entry.items()} for entry in entries]
 
 
-def normalize_names(entries):
+def normalize_names(entries: list[dict[str, str]]) -> list[dict[str, str]]:
     """Normalize the author and editor names."""
     raise NotImplementedError("processing of names is not robust in BibtexParser 1.4.0")
     result = []
@@ -447,7 +451,7 @@ def normalize_names(entries):
     return result
 
 
-def fix_page_double_hyphen(entries):
+def fix_page_double_hyphen(entries: list[dict[str, str]]) -> list[dict[str, str]]:
     """Fix page ranges for which no double hyphen is used."""
     result = []
     for entry in entries:
@@ -458,7 +462,7 @@ def fix_page_double_hyphen(entries):
     return result
 
 
-def abbreviate_journal_iso(entries, fn_cache):
+def abbreviate_journal_iso(entries: list[dict[str, str]], fn_cache: str) -> list[dict[str, str]]:
     """Replace journal names by their ISO abbreviation."""
 
     # Initialize cache
@@ -488,7 +492,7 @@ def abbreviate_journal_iso(entries, fn_cache):
     return result
 
 
-def download_abbrev(journal):
+def download_abbrev(journal: str) -> str:
     """Download the abbreviation of a full journal name."""
     print("   Downloading abbreviation for:", journal)
     journal_quote = urllib.parse.quote(journal)
@@ -497,7 +501,7 @@ def download_abbrev(journal):
         return f.read().decode()
 
 
-def merge_entries(entries, field):
+def merge_entries(entries: list[dict[str, str]], field: str) -> tuple[list[dict[str, str]], bool]:
     """Merge entries who have the same value for the given field. (case-insensitive)"""
     lookup = {}
     missing_key = []
@@ -518,7 +522,7 @@ def merge_entries(entries, field):
     return list(lookup.values()) + missing_key, merge_conflict
 
 
-def sort_entries(entries):
+def sort_entries(entries: list[dict[str, str]]) -> list[dict[str, str]]:
     """Sort the entries in convenient way: by year, then by author."""
 
     def keyfn(entry):
@@ -531,7 +535,7 @@ def sort_entries(entries):
     return sorted(entries, key=keyfn)
 
 
-def write_output(entries, fn_out, retcode, verbose):
+def write_output(entries: list[dict[str, str]], fn_out: str, retcode: int, verbose: bool) -> int:
     """Write out the fixed bibtex file, in case it has changed."""
     if retcode == RETURN_CODE_CHANGED:
         # Write out a single BibTeX database.
@@ -559,7 +563,7 @@ def write_output(entries, fn_out, retcode, verbose):
     return retcode
 
 
-def checksum(path):
+def checksum(path: str) -> bytes:
     """Compute the SHA256 checksum from the contents of a file."""
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).digest()
