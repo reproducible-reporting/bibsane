@@ -21,12 +21,12 @@ repos:
       args: ["--autofix", "--no-sort-keys"]
     - id: trailing-whitespace
 - repo: https://github.com/psf/black
-  rev: 23.1.0
+  rev: 23.3.0
   hooks:
     - id: black
       args: ["--line-length", "100"]
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.3.1
+  rev: v3.4.0
   hooks:
   - id: pyupgrade
     args: [--py36-plus]
@@ -37,6 +37,6 @@ repos:
     args: ["--line-length", "100", "--profile", "black", "--filter-files"]
     name: isort
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.4.2
+  rev: v1.5.1
   hooks:
     - id: remove-crlf
