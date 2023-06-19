@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Workaround for https://github.com/sciunto-org/python-bibtexparser/issues/384
+
 ## [0.1.2] - 2023-04-12
 
 ### Fixed

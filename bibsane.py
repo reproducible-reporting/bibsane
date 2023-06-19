@@ -99,6 +99,15 @@ RETURN_CODE_UNCHANGED = 0
 RETURN_CODE_CHANGED = 1
 RETURN_CODE_BROKEN = 2
 
+# List of citations to ignore, which are added by some LaTeX templates,
+# but which are not correctly parsed by python-bibtexparser.
+# Related issue: https://github.com/sciunto-org/python-bibtexparser/issues/384
+IGNORED_CITATIONS = set(
+    [
+        "REVTEX41Control",
+    ]
+)
+
 
 def main() -> int:
     """Bibsane main program."""
@@ -263,6 +272,8 @@ def parse_aux(fn_aux: str) -> tuple[list[str], list[str]]:
         if not fn_bib.endswith(".bib"):
             fn_bib += ".bib"
         fns_bib.append(os.path.join(root, fn_bib))
+    # Filter out bogus citations
+    citations = [citation for citation in citations if citation not in IGNORED_CITATIONS]
     return citations, fns_bib
 
 
@@ -310,7 +321,17 @@ def drop_check_citations(
     entries: list[dict[str, str]], citations: Collection[str], drop
 ) -> tuple[list[dict[str, str]], bool]:
     """Drop unused citations and complain about missing ones."""
-    # Drop unused entries
+    # Check for undefined references
+    print(entries)
+    defined = {entry["ID"] for entry in entries}
+    print(defined)
+    valid = True
+    for citation in citations:
+        if citation not in defined:
+            print("   💀 Missing reference:", citation)
+            valid = False
+
+    # Drop unused and irrelevant entries
     result = []
     for entry in entries:
         if entry["ID"] not in citations:
@@ -320,14 +341,6 @@ def drop_check_citations(
             print("     Dropping irrelevant entry type:", entry["ENTRYTYPE"])
             continue
         result.append(entry)
-
-    # Check for undefined references
-    defined = {entry["ID"] for entry in entries}
-    valid = True
-    for citation in citations:
-        if citation not in defined:
-            print("   💀 Missing reference:", citation)
-            valid = False
 
     return result, valid
 
