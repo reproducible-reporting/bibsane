@@ -322,9 +322,7 @@ def drop_check_citations(
 ) -> tuple[list[dict[str, str]], bool]:
     """Drop unused citations and complain about missing ones."""
     # Check for undefined references
-    print(entries)
     defined = {entry["ID"] for entry in entries}
-    print(defined)
     valid = True
     for citation in citations:
         if citation not in defined:
