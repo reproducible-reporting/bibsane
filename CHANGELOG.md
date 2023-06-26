@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added `note` as an exception where braces are allowed.
 - Workaround for https://github.com/sciunto-org/python-bibtexparser/issues/384
 
 ## [0.1.2] - 2023-04-12

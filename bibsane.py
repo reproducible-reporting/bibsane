@@ -387,8 +387,8 @@ def fix_bad_practices(entries: list[dict[str, str]]) -> list[dict[str, str]]:
         new_record = {
             key: value.replace("{", "").replace("}", "") for (key, value) in old_record.items()
         }
-        # Except from the author, editor or title
-        for field in "author", "editor", "title":
+        # Except from the author, editor, note or title
+        for field in "author", "editor", "note", "title":
             if field in old_record:
                 new_record[field] = old_record[field]
         result.append(new_record)
