@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # BibSane helps you sanitize BibTeX files without going insane.
 # Copyright (C) 2023 Toon Verstraelen
 #

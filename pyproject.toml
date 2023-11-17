@@ -37,7 +37,7 @@ Source = "https://github.com/reproducible-reporting/bibsane/"
 Changelog = "https://github.com/reproducible-reporting/bibsane/blob/main/CHANGELOG.md"
 
 [project.scripts]
-bibsane = "bibsane:main"
+bibsane = "bibsane.__main__:main"
 
 [tool.black]
 line-length = 100
@@ -50,5 +50,6 @@ target-version = "py310"
 ignore = ["PLR2004", "PLR0913", "PLR0912", "PLW2901", "PLR0915"]
 
 [tool.setuptools_scm]
+write_to = "src/bibsane/_version.py"
 version_scheme = "post-release"
 local_scheme = "no-local-version"
