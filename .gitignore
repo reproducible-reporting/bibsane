@@ -1,6 +1,17 @@
+# Local dev environment
+.envrc
+.idea
+tmp
+venv/
+.ruff_cache
+.pytest_cache
+
+# Python and packaging
 __pycache__
 *.egg-info
 dist
 build
-.envrc
-env/
+_version.py
+
+# StepUp Core specifics
+docs/.stepup

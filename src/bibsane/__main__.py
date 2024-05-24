@@ -19,7 +19,6 @@
 # --
 """BibSane main program."""
 
-
 import argparse
 import enum
 import hashlib
@@ -101,11 +100,7 @@ RETURN_CODE_BROKEN = 2
 # List of citations to ignore, which are added by some LaTeX templates,
 # but which are not correctly parsed by python-bibtexparser.
 # Related issue: https://github.com/sciunto-org/python-bibtexparser/issues/384
-IGNORED_CITATIONS = set(
-    [
-        "REVTEX41Control",
-    ]
-)
+IGNORED_CITATIONS = {"REVTEX41Control"}
 
 
 def main() -> int:
@@ -120,6 +115,7 @@ def main() -> int:
         if ifn > 0:
             print()
         return process_aux(fn_aux, verbose, config)
+    return -1
 
 
 def parse_args() -> tuple[list[str], bool, Config]:
@@ -266,11 +262,10 @@ def parse_aux(fn_aux: str) -> tuple[list[str], list[str]]:
         for line in f:
             parse_aux_line("citation", line, citations)
             parse_aux_line("bibdata", line, bibdata)
-    fns_bib = []
-    for fn_bib in bibdata:
-        if not fn_bib.endswith(".bib"):
-            fn_bib += ".bib"
-        fns_bib.append(os.path.join(root, fn_bib))
+    fns_bib = [
+        os.path.join(root, fn_bib if fn_bib.endswith(".bib") else fn_bib + ".bib")
+        for fn_bib in bibdata
+    ]
     # Filter out bogus citations
     citations = [citation for citation in citations if citation not in IGNORED_CITATIONS]
     return citations, fns_bib
@@ -423,7 +418,9 @@ def normalize_doi(entries: list[dict[str, str]]) -> tuple[list[dict[str, str]], 
     valid = True
     for entry in entries:
         doi = entry.get("doi")
-        if doi is not None:
+        if doi is None:
+            new_entry = entry
+        else:
             doi = doi.lower()
             for proxy in DOI_PROXIES:
                 if doi.startswith(proxy):
@@ -432,8 +429,8 @@ def normalize_doi(entries: list[dict[str, str]]) -> tuple[list[dict[str, str]], 
             if doi.count("/") == 0 or not doi.startswith("10."):
                 print("   🤕 invalid DOI:", doi)
                 valid = False
-            entry = entry | {"doi": doi}
-        result.append(entry)
+            new_entry = entry | {"doi": doi}
+        result.append(new_entry)
     return result, valid
 
 
@@ -449,27 +446,27 @@ def normalize_names(entries: list[dict[str, str]]) -> list[dict[str, str]]:
     for entry in entries:
         # Warning: bibtexparser modifies entries in place.
         # It does not hurt in this case, but it can otherwise give unexpected results.
+        new_entry = entry
         for field in "author", "editor":
             if field in entry:
                 splitter = getattr(bibtexparser.customization, field)
-                entry = splitter(entry)
+                new_entry = splitter(new_entry)
                 names = entry[field]
                 names = [bibtexparser.latexenc.latex_to_unicode(name) for name in names]
                 names = [bibtexparser.latexenc.string_to_latex(name) for name in names]
                 entry[field] = " and ".join(names)
-        result.append(entry)
+        result.append(new_entry)
     return result
 
 
 def fix_page_double_hyphen(entries: list[dict[str, str]]) -> list[dict[str, str]]:
     """Fix page ranges for which no double hyphen is used."""
-    result = []
-    for entry in entries:
+    return [
         # Warning: bibtexparser modifies entries in place.
         # It does not hurt in this case, but it can otherwise give unexpected results.
-        entry = bibtexparser.customization.page_double_hyphen(entry)
-        result.append(entry)
-    return result
+        bibtexparser.customization.page_double_hyphen(entry)
+        for entry in entries
+    ]
 
 
 def abbreviate_journal_iso(entries: list[dict[str, str]], fn_cache: str) -> list[dict[str, str]]:
@@ -486,13 +483,14 @@ def abbreviate_journal_iso(entries: list[dict[str, str]], fn_cache: str) -> list
     result = []
     for entry in entries:
         journal = entry.get("journal")
+        new_entry = entry
         if journal is not None and "." not in journal:
             abbrev = cache.get(journal)
             if abbrev is None:
                 abbrev = download_abbrev(journal)
                 cache[journal] = abbrev
-            entry = entry | {"journal": abbrev}
-        result.append(entry)
+            new_entry = new_entry | {"journal": abbrev}
+        result.append(new_entry)
 
     # Store cache
     if fn_cache is not None:
@@ -539,8 +537,7 @@ def sort_entries(entries: list[dict[str, str]]) -> list[dict[str, str]]:
         # Make a fake entry to avoid in-place modification.
         entry = {"author": entry.get("author", "Aaaa Aaaa"), "year": entry.get("year", "0000")}
         first_author = bibtexparser.customization.author(entry)["author"][0].lower()
-        key = entry["year"] + first_author
-        return key
+        return entry["year"] + first_author
 
     return sorted(entries, key=keyfn)
 
