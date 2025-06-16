@@ -1,5 +1,13 @@
 # BibSane
 
+---
+
+This repository has been archived.
+Bibsane is now integrated into [StepUp RepRep](https://reproducible-reporting.github.io/stepup-reprep).
+There will be no further development in this repository.
+
+---
+
 Sanitize BibTeX files without going insane.
 
 BibSane is comparable to [bibexport](https://www.ctan.org/pkg/bibexport) and [checkcites](https://www.ctan.org/tex-archive/support/checkcites), but has a few important improvements.
